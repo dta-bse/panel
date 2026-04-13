@@ -3,336 +3,411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Diagnostics</title>
+    <title>System Settings</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>&#9881;</text></svg>">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --bg: #0a0a0f;
-            --surface: #12121a;
-            --surface2: #1a1a25;
-            --border: #2a2a3a;
-            --accent: #00ff88;
-            --accent2: #00aaff;
-            --text: #e0e0e0;
-            --text-dim: #666;
+            --bg: #0d1117;
+            --surface: #161b22;
+            --surface2: #1c2333;
+            --surface3: #242d3d;
+            --border: #30363d;
+            --accent: #58a6ff;
+            --accent-glow: rgba(88,166,255,0.15);
+            --green: #3fb950;
+            --green-glow: rgba(63,185,80,0.15);
+            --red: #f85149;
+            --orange: #d29922;
+            --purple: #bc8cff;
+            --text: #c9d1d9;
+            --text-dim: #8b949e;
+            --text-bright: #f0f6fc;
         }
-        body { font-family: 'Courier New', monospace; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden;
+            user-select: none;
+        }
 
-        /* Sidebar */
+        /* ===== SIDEBAR ===== */
         #sidebar {
-            width: 48px;
+            width: 52px;
             background: var(--surface);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 8px 0;
-            gap: 4px;
-            transition: width 0.2s;
+            padding: 10px 0;
+            gap: 2px;
+            transition: width 0.25s cubic-bezier(0.4,0,0.2,1);
+            z-index: 100;
         }
-        #sidebar.expanded { width: 200px; }
-        .sidebar-btn {
-            width: 36px;
-            height: 36px;
-            background: transparent;
-            border: 1px solid transparent;
-            border-radius: 6px;
-            color: var(--text-dim);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            transition: all 0.15s;
+        #sidebar.expanded { width: 180px; }
+        .sb {
+            width: 38px; height: 38px;
+            background: transparent; border: none; border-radius: 8px;
+            color: var(--text-dim); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; transition: all 0.15s; position: relative;
+        }
+        .sb:hover { background: var(--surface2); color: var(--accent); }
+        .sb.active { color: var(--accent); background: var(--accent-glow); }
+        .sb .lbl { display: none; font-size: 12px; margin-left: 10px; white-space: nowrap; color: var(--text); }
+        #sidebar.expanded .sb { width: calc(100% - 16px); justify-content: flex-start; padding-left: 11px; }
+        #sidebar.expanded .sb .lbl { display: inline; }
+        .sb-div { width: 24px; height: 1px; background: var(--border); margin: 6px 0; }
+        #sidebar.expanded .sb-div { width: calc(100% - 24px); }
+        .sb-spacer { flex: 1; }
+
+        /* ===== MAIN ===== */
+        #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+        /* ===== TABS ===== */
+        #tab-bar {
+            display: flex; align-items: center;
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            height: 40px; padding: 0 8px; gap: 2px; overflow-x: auto;
+        }
+        #tab-bar::-webkit-scrollbar { height: 0; }
+        .tab {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 10px; background: transparent;
+            border: 1px solid transparent; border-radius: 8px 8px 0 0;
+            color: var(--text-dim); font-size: 12px; cursor: pointer;
+            white-space: nowrap; max-width: 180px; transition: all 0.1s;
+            font-family: inherit;
+        }
+        .tab:hover { background: var(--surface2); color: var(--text); }
+        .tab.active { background: var(--bg); color: var(--accent); border-color: var(--border); border-bottom-color: var(--bg); }
+        .tab-x { font-size: 15px; color: var(--text-dim); cursor: pointer; line-height: 1; border-radius: 4px; padding: 0 2px; }
+        .tab-x:hover { color: var(--red); background: rgba(248,81,73,0.1); }
+        #add-tab {
+            width: 30px; height: 30px; background: transparent; border: 1px solid transparent;
+            border-radius: 8px; color: var(--text-dim); cursor: pointer; font-size: 18px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        #add-tab:hover { background: var(--surface2); color: var(--accent); border-color: var(--border); }
+
+        /* ===== URL BAR ===== */
+        #url-row {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 10px; background: var(--surface); border-bottom: 1px solid var(--border);
+        }
+        .nbtn {
+            width: 30px; height: 30px; background: transparent; border: none;
+            color: var(--text-dim); cursor: pointer; font-size: 15px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .nbtn:hover { background: var(--surface2); color: var(--accent); }
+        .nbtn:active { transform: scale(0.92); }
+        #url {
+            flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+            padding: 7px 14px; color: var(--text-bright); font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px; outline: none; transition: border 0.15s, box-shadow 0.15s;
+        }
+        #url:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+        #url::placeholder { color: var(--text-dim); }
+
+        /* ===== CONTENT ===== */
+        #content { flex: 1; position: relative; background: var(--bg); }
+        .frame { width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; display: none; background: #fff; }
+        .frame.active { display: block; }
+
+        /* ===== PANELS ===== */
+        .pnl {
+            display: none; position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg); padding: 28px 32px; overflow-y: auto; z-index: 10;
+        }
+        .pnl.active { display: block; }
+        .pnl-title { font-size: 20px; font-weight: 600; color: var(--text-bright); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .pnl-title span { font-size: 22px; }
+        .pnl-sub { font-size: 13px; font-weight: 600; color: var(--accent); margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .pnl-desc { font-size: 12px; color: var(--text-dim); margin-bottom: 16px; }
+
+        /* ===== BOOKMARKS ===== */
+        .bm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+        .bm-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+            padding: 16px 10px; cursor: pointer; text-align: center; transition: all 0.2s;
             position: relative;
         }
-        .sidebar-btn:hover { background: var(--surface2); color: var(--accent); border-color: var(--border); }
-        .sidebar-btn.active { color: var(--accent); background: var(--surface2); border-color: var(--accent); }
-        .sidebar-btn .label { display: none; font-size: 11px; margin-left: 8px; white-space: nowrap; }
-        #sidebar.expanded .sidebar-btn { width: calc(100% - 16px); justify-content: flex-start; padding-left: 10px; }
-        #sidebar.expanded .sidebar-btn .label { display: inline; }
-        .sidebar-divider { width: 28px; height: 1px; background: var(--border); margin: 4px 0; }
+        .bm-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .bm-ico { width: 40px; height: 40px; border-radius: 10px; background: var(--surface2); margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: var(--accent); }
+        .bm-name { font-size: 12px; font-weight: 500; color: var(--text); }
+        .bm-url { font-size: 10px; color: var(--text-dim); margin-top: 3px; word-break: break-all; }
+        .bm-del { position: absolute; top: 6px; right: 8px; font-size: 14px; color: var(--text-dim); cursor: pointer; display: none; border-radius: 4px; padding: 0 3px; }
+        .bm-card:hover .bm-del { display: block; }
+        .bm-del:hover { color: var(--red); background: rgba(248,81,73,0.1); }
+        .bm-form { display: flex; gap: 8px; margin-bottom: 20px; }
+        .bm-form input {
+            flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+            padding: 8px 12px; color: var(--text); font-family: inherit; font-size: 13px; outline: none;
+        }
+        .bm-form input:focus { border-color: var(--accent); }
+        .btn {
+            background: var(--accent); color: var(--bg); border: none; border-radius: 8px;
+            padding: 8px 16px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px;
+            transition: all 0.15s;
+        }
+        .btn:hover { filter: brightness(1.15); }
+        .btn:active { transform: scale(0.96); }
+        .btn-danger { background: var(--red); }
+        .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 6px; }
 
-        /* Main area */
-        #main { flex: 1; display: flex; flex-direction: column; }
+        /* ===== NOTES ===== */
+        #notes {
+            width: 100%; height: calc(100% - 100px); background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; padding: 18px; color: var(--text); font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px; resize: none; outline: none; line-height: 1.6;
+        }
+        #notes:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 
-        /* Tab bar */
-        #tab-bar {
-            display: flex;
-            align-items: center;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            height: 38px;
-            padding: 0 8px;
-            gap: 4px;
-            overflow-x: auto;
+        /* ===== TERMINAL ===== */
+        #term-out {
+            width: 100%; height: calc(100% - 110px); background: #010409; border: 1px solid var(--border);
+            border-radius: 10px; padding: 14px; color: var(--green); font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 12px; overflow-y: auto; white-space: pre-wrap; line-height: 1.5;
         }
-        .tab {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 12px;
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 6px 6px 0 0;
-            color: var(--text-dim);
-            font-size: 11px;
-            cursor: pointer;
-            white-space: nowrap;
-            max-width: 160px;
-            font-family: 'Courier New', monospace;
+        #term-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+        #term-prompt { color: var(--green); font-family: 'Consolas', monospace; font-size: 13px; font-weight: 700; }
+        #term-in {
+            flex: 1; background: #010409; border: 1px solid var(--border); border-radius: 8px;
+            padding: 8px 12px; color: var(--green); font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px; outline: none;
         }
-        .tab.active { background: var(--bg); color: var(--accent); border-bottom-color: var(--bg); }
-        .tab-close { font-size: 14px; color: var(--text-dim); cursor: pointer; line-height: 1; }
-        .tab-close:hover { color: #f44; }
-        #new-tab-btn {
-            width: 28px; height: 28px; background: transparent; border: 1px solid var(--border);
-            border-radius: 6px; color: var(--text-dim); cursor: pointer; font-size: 16px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        #new-tab-btn:hover { background: var(--surface2); color: var(--accent); }
+        #term-in:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-glow); }
 
-        /* URL bar */
-        #url-bar-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 12px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-        }
-        .nav-btn {
-            width: 28px; height: 28px; background: transparent; border: none;
-            color: var(--text-dim); cursor: pointer; font-size: 14px; border-radius: 4px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .nav-btn:hover { background: var(--surface2); color: var(--accent); }
-        #url-input {
-            flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
-            padding: 6px 12px; color: var(--accent); font-family: 'Courier New', monospace; font-size: 13px;
-            outline: none;
-        }
-        #url-input:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(0,255,136,0.15); }
-
-        /* Content area */
-        #content-area { flex: 1; position: relative; background: var(--bg); }
-        .tab-frame { width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; display: none; }
-        .tab-frame.active { display: block; }
-
-        /* Panels */
-        .panel {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--bg);
-            padding: 24px;
-            overflow-y: auto;
-            z-index: 10;
-        }
-        .panel.active { display: block; }
-        .panel h2 { color: var(--accent); font-size: 16px; margin-bottom: 16px; }
-        .panel h3 { color: var(--accent2); font-size: 13px; margin: 16px 0 8px; }
-
-        /* Bookmarks */
-        .bookmark-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
-        .bookmark-card {
-            background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-            padding: 12px; cursor: pointer; text-align: center; transition: all 0.15s;
-        }
-        .bookmark-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-        .bookmark-card .icon { font-size: 24px; margin-bottom: 6px; }
-        .bookmark-card .name { font-size: 11px; color: var(--text); }
-        .bookmark-card .url { font-size: 9px; color: var(--text-dim); margin-top: 4px; word-break: break-all; }
-
-        /* Bookmark editor */
-        .bookmark-form { display: flex; gap: 8px; margin-bottom: 16px; }
-        .bookmark-form input {
-            flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px;
-            padding: 6px 10px; color: var(--text); font-family: 'Courier New', monospace; font-size: 12px;
-        }
-        .bookmark-form button, .form-btn {
-            background: var(--accent); color: var(--bg); border: none; border-radius: 4px;
-            padding: 6px 14px; cursor: pointer; font-family: 'Courier New', monospace; font-weight: bold; font-size: 12px;
-        }
-
-        /* Notes */
-        #notes-area {
-            width: 100%; height: calc(100% - 80px); background: var(--surface2); border: 1px solid var(--border);
-            border-radius: 8px; padding: 16px; color: var(--text); font-family: 'Courier New', monospace;
-            font-size: 13px; resize: none; outline: none;
-        }
-        #notes-area:focus { border-color: var(--accent); }
-
-        /* Terminal */
-        #terminal-output {
-            width: 100%; height: calc(100% - 100px); background: #000; border: 1px solid var(--border);
-            border-radius: 8px; padding: 12px; color: var(--accent); font-family: 'Courier New', monospace;
-            font-size: 12px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px;
-        }
-        #terminal-input-row { display: flex; align-items: center; gap: 8px; }
-        #terminal-prompt { color: var(--accent); font-size: 13px; }
-        #terminal-input {
-            flex: 1; background: #000; border: 1px solid var(--border); border-radius: 4px;
-            padding: 6px 10px; color: var(--accent); font-family: 'Courier New', monospace; font-size: 13px; outline: none;
-        }
-
-        /* Status bar */
-        #status-bar {
+        /* ===== SETTINGS ===== */
+        .setting-row {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 2px 12px; background: var(--surface); border-top: 1px solid var(--border);
-            font-size: 10px; color: var(--text-dim); height: 22px;
+            padding: 12px 16px; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; margin-bottom: 8px;
         }
-        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; margin-right: 6px; }
+        .setting-row label { font-size: 13px; color: var(--text); }
+        .setting-row select, .setting-row input[type="color"] {
+            background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+            padding: 6px 10px; border-radius: 6px; font-family: inherit; font-size: 12px; outline: none;
+        }
 
-        /* Scrollbar */
+        /* ===== PANIC ===== */
+        #panic-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg); z-index: 9999; align-items: center; justify-content: center;
+            flex-direction: column; gap: 16px;
+        }
+        #panic-overlay.active { display: flex; }
+        #panic-overlay h1 { color: var(--text-dim); font-size: 24px; font-weight: 400; }
+        #panic-overlay p { color: var(--text-dim); font-size: 13px; }
+
+        /* ===== STATUS ===== */
+        #status {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 3px 12px; background: var(--surface); border-top: 1px solid var(--border);
+            font-size: 11px; color: var(--text-dim); height: 24px;
+        }
+        .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* ===== SCROLLBAR ===== */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
-        /* Delete bookmark btn */
-        .bookmark-card { position: relative; }
-        .bookmark-del {
-            position: absolute; top: 4px; right: 6px; font-size: 12px;
-            color: var(--text-dim); cursor: pointer; display: none;
+        /* ===== HOME ===== */
+        #home-panel {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg); z-index: 5;
         }
-        .bookmark-card:hover .bookmark-del { display: block; }
-        .bookmark-del:hover { color: #f44; }
+        #home-panel.hidden { display: none; }
+        .home-search {
+            width: 500px; max-width: 90%; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px 20px; color: var(--text-bright);
+            font-size: 15px; font-family: inherit; outline: none; margin-bottom: 30px;
+            transition: border 0.15s, box-shadow 0.15s;
+        }
+        .home-search:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
+        .home-title { font-size: 32px; font-weight: 300; color: var(--text-dim); margin-bottom: 24px; letter-spacing: -0.5px; }
+        .home-shortcuts { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+        .home-sc {
+            width: 80px; text-align: center; cursor: pointer; padding: 10px; border-radius: 10px;
+            transition: background 0.15s;
+        }
+        .home-sc:hover { background: var(--surface); }
+        .home-sc-ico { width: 48px; height: 48px; border-radius: 12px; background: var(--surface); margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: var(--accent); border: 1px solid var(--border); }
+        .home-sc-name { font-size: 11px; color: var(--text-dim); }
     </style>
 </head>
 <body>
+    <!-- Panic overlay -->
+    <div id="panic-overlay">
+        <h1>System Settings</h1>
+        <p>Loading configuration...</p>
+    </div>
+
     <!-- Sidebar -->
     <div id="sidebar">
-        <button class="sidebar-btn" onclick="toggleSidebar()" title="Menu">&#9776;<span class="label">Menu</span></button>
-        <div class="sidebar-divider"></div>
-        <button class="sidebar-btn active" onclick="showView('browser')" id="btn-browser" title="Browser">&#9758;<span class="label">Browser</span></button>
-        <button class="sidebar-btn" onclick="showView('bookmarks')" id="btn-bookmarks" title="Bookmarks">&#9733;<span class="label">Bookmarks</span></button>
-        <button class="sidebar-btn" onclick="showView('notes')" id="btn-notes" title="Notes">&#9998;<span class="label">Notes</span></button>
-        <button class="sidebar-btn" onclick="showView('terminal')" id="btn-terminal" title="Terminal">&#9654;<span class="label">Terminal</span></button>
-        <div class="sidebar-divider"></div>
-        <button class="sidebar-btn" onclick="showView('settings')" id="btn-settings" title="Settings">&#9881;<span class="label">Settings</span></button>
+        <button class="sb" onclick="toggleSidebar()" title="Menu">&#9776;<span class="lbl">Menu</span></button>
+        <div class="sb-div"></div>
+        <button class="sb active" onclick="showView('browser')" id="sb-browser" title="Overview">&#9783;<span class="lbl">Overview</span></button>
+        <button class="sb" onclick="showView('bookmarks')" id="sb-bookmarks" title="Favorites">&#9733;<span class="lbl">Favorites</span></button>
+        <button class="sb" onclick="showView('notes')" id="sb-notes" title="Clipboard">&#9998;<span class="lbl">Clipboard</span></button>
+        <button class="sb" onclick="showView('terminal')" id="sb-terminal" title="Diagnostics">&#9654;<span class="lbl">Diagnostics</span></button>
+        <div class="sb-spacer"></div>
+        <div class="sb-div"></div>
+        <button class="sb" onclick="showView('settings')" id="sb-settings" title="Preferences">&#9881;<span class="lbl">Preferences</span></button>
     </div>
 
     <!-- Main -->
     <div id="main">
         <!-- Tab bar -->
         <div id="tab-bar">
-            <div id="tabs-container"></div>
-            <button id="new-tab-btn" onclick="createTab()" title="New Tab">+</button>
+            <div id="tabs-ct"></div>
+            <button id="add-tab" onclick="createTab()" title="New Tab">+</button>
         </div>
 
         <!-- URL bar -->
-        <div id="url-bar-container">
-            <button class="nav-btn" onclick="navBack()" title="Back">&#9664;</button>
-            <button class="nav-btn" onclick="navForward()" title="Forward">&#9654;</button>
-            <button class="nav-btn" onclick="navReload()" title="Reload">&#8635;</button>
-            <input id="url-input" type="text" placeholder="Search or enter URL..." spellcheck="false" />
-            <button class="nav-btn" onclick="navigate()" title="Go">&#10148;</button>
+        <div id="url-row">
+            <button class="nbtn" onclick="navBack()" title="Back">&#9664;</button>
+            <button class="nbtn" onclick="navForward()" title="Forward">&#9654;</button>
+            <button class="nbtn" onclick="navReload()" title="Reload">&#8635;</button>
+            <input id="url" type="text" placeholder="Search or enter address..." spellcheck="false" autocomplete="off" />
+            <button class="nbtn" onclick="go()" title="Go">&#10148;</button>
         </div>
 
         <!-- Content -->
-        <div id="content-area">
-            <div id="frames-container"></div>
+        <div id="content">
+            <div id="frames"></div>
 
-            <!-- Bookmarks Panel -->
-            <div class="panel" id="panel-bookmarks">
-                <h2>> Bookmarks</h2>
-                <div class="bookmark-form">
-                    <input id="bm-name" placeholder="Name" />
-                    <input id="bm-url" placeholder="URL" />
-                    <button onclick="addBookmark()">+ Add</button>
+            <!-- Home -->
+            <div id="home-panel">
+                <div class="home-title">System Settings</div>
+                <input class="home-search" id="home-search" type="text" placeholder="Search settings or enter address..." spellcheck="false" autocomplete="off" />
+                <div class="home-shortcuts" id="home-shortcuts"></div>
+            </div>
+
+            <!-- Bookmarks -->
+            <div class="pnl" id="pnl-bookmarks">
+                <div class="pnl-title"><span>&#9733;</span> Favorites</div>
+                <div class="bm-form">
+                    <input id="bm-n" placeholder="Name" />
+                    <input id="bm-u" placeholder="URL" />
+                    <button class="btn btn-sm" onclick="addBM()">+ Add</button>
                 </div>
-                <h3>Quick Access</h3>
-                <div class="bookmark-grid" id="bookmark-grid"></div>
+                <div class="pnl-sub">Quick Access</div>
+                <div class="bm-grid" id="bm-grid"></div>
             </div>
 
-            <!-- Notes Panel -->
-            <div class="panel" id="panel-notes">
-                <h2>> Notes</h2>
-                <p style="font-size:11px;color:var(--text-dim);margin-bottom:12px;">Auto-saved to localStorage</p>
-                <textarea id="notes-area" placeholder="Type your notes here..."></textarea>
+            <!-- Notes -->
+            <div class="pnl" id="pnl-notes">
+                <div class="pnl-title"><span>&#9998;</span> Clipboard</div>
+                <div class="pnl-desc">Auto-saved locally</div>
+                <textarea id="notes" placeholder="Type here..."></textarea>
             </div>
 
-            <!-- Terminal Panel -->
-            <div class="panel" id="panel-terminal">
-                <h2>> Terminal</h2>
-                <div id="terminal-output">HackPanel OS v1.0&#10;Type 'help' for commands.&#10;&#10;</div>
-                <div id="terminal-input-row">
-                    <span id="terminal-prompt">$&gt;</span>
-                    <input id="terminal-input" type="text" placeholder="Enter command..." spellcheck="false" />
+            <!-- Terminal -->
+            <div class="pnl" id="pnl-terminal">
+                <div class="pnl-title"><span>&#9654;</span> Diagnostics</div>
+                <div id="term-out">System Diagnostics v2.0
+Ready. Type 'help' for available commands.
+
+</div>
+                <div id="term-row">
+                    <span id="term-prompt">&#8250;</span>
+                    <input id="term-in" type="text" placeholder="Enter command..." spellcheck="false" autocomplete="off" />
                 </div>
             </div>
 
-            <!-- Settings Panel -->
-            <div class="panel" id="panel-settings">
-                <h2>> Settings</h2>
-                <h3>Search Engine</h3>
-                <select id="search-engine" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px;border-radius:4px;font-family:'Courier New',monospace;">
-                    <option value="https://www.google.com/search?igu=1&q=">Google</option>
-                    <option value="https://duckduckgo.com/?q=">DuckDuckGo</option>
-                    <option value="https://www.bing.com/search?q=">Bing</option>
-                    <option value="https://search.yahoo.com/search?p=">Yahoo</option>
-                </select>
-                <h3>Quick Actions</h3>
-                <button class="form-btn" onclick="clearAllData()" style="background:#f44;margin-top:8px;">Clear All Data</button>
-                <p style="font-size:10px;color:var(--text-dim);margin-top:4px;">Removes bookmarks, notes, and history</p>
-                <h3>About</h3>
-                <p style="font-size:11px;color:var(--text-dim);line-height:1.6;">
-                    HackPanel v1.0<br>
-                    Local USB application<br>
-                    All data stored in browser localStorage
-                </p>
+            <!-- Settings -->
+            <div class="pnl" id="pnl-settings">
+                <div class="pnl-title"><span>&#9881;</span> Preferences</div>
+                <div class="pnl-sub">Search Provider</div>
+                <div class="setting-row">
+                    <label>Default search engine</label>
+                    <select id="engine">
+                        <option value="https://www.google.com/search?igu=1&q=">Google</option>
+                        <option value="https://duckduckgo.com/?q=">DuckDuckGo</option>
+                        <option value="https://www.bing.com/search?q=">Bing</option>
+                        <option value="https://search.yahoo.com/search?p=">Yahoo</option>
+                    </select>
+                </div>
+                <div class="pnl-sub">Proxy Mode</div>
+                <div class="setting-row">
+                    <label>Route traffic through proxy (fixes iframe errors)</label>
+                    <select id="proxy-sel" onchange="proxyMode=this.value;sv('proxy',this.value);">
+                        <option value="gscript">Google Script Proxy (recommended)</option>
+                        <option value="direct">Direct (no proxy)</option>
+                    </select>
+                </div>
+                <div class="pnl-sub">Keyboard Shortcuts</div>
+                <div class="setting-row">
+                    <label>Panic key (hides everything)</label>
+                    <span style="color:var(--text-dim);font-size:12px;font-family:monospace;">Esc (hold 0.5s) or ~ key</span>
+                </div>
+                <div class="pnl-sub">Data</div>
+                <div class="setting-row">
+                    <label>Clear all saved data</label>
+                    <button class="btn btn-danger btn-sm" onclick="clearAll()">Clear Data</button>
+                </div>
+                <div class="pnl-sub">About</div>
+                <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                    <label style="color:var(--text-dim);font-size:12px;line-height:1.6;">
+                        System Settings v2.0<br>
+                        Configuration interface<br>
+                        All data stored locally
+                    </label>
+                </div>
             </div>
         </div>
 
-        <!-- Status bar -->
-        <div id="status-bar">
-            <span><span class="status-dot"></span>Connected</span>
-            <span id="status-info">Ready</span>
+        <!-- Status -->
+        <div id="status">
+            <span><span class="dot"></span>Active</span>
+            <span id="st-info">Ready</span>
             <span id="clock"></span>
         </div>
     </div>
 
     <script>
-        // ============ STATE ============
-        let tabs = [];
-        let activeTabId = null;
-        let currentView = 'browser';
-        let tabCounter = 0;
+        // ========== STATE ==========
+        let tabs = [], activeTab = null, tabN = 0, view = 'browser';
 
-        // ============ STORAGE ============
-        function loadData(key, fallback) {
-            try { return JSON.parse(localStorage.getItem('hp_' + key)) || fallback; }
-            catch { return fallback; }
-        }
-        function saveData(key, val) { localStorage.setItem('hp_' + key, JSON.stringify(val)); }
+        // ========== STORAGE ==========
+        const ld = (k, fb) => { try { return JSON.parse(localStorage.getItem('ss_'+k)) || fb; } catch { return fb; } };
+        const sv = (k, v) => localStorage.setItem('ss_'+k, JSON.stringify(v));
 
-        let bookmarks = loadData('bookmarks', [
-            { name: 'Google', url: 'https://www.google.com/webhp?igu=1', icon: 'G' },
-            { name: 'YouTube', url: 'https://www.youtube.com', icon: 'YT' },
-            { name: 'Reddit', url: 'https://www.reddit.com', icon: 'R' },
-            { name: 'Wikipedia', url: 'https://www.wikipedia.org', icon: 'W' },
-            { name: 'GitHub', url: 'https://www.github.com', icon: 'GH' },
-            { name: 'Discord', url: 'https://discord.com/app', icon: 'DC' },
+        let bms = ld('bms', [
+            { n: 'Google', u: 'https://www.google.com/webhp?igu=1', i: 'G' },
+            { n: 'YouTube', u: 'https://www.youtube.com', i: 'YT' },
+            { n: 'Reddit', u: 'https://www.reddit.com', i: 'R' },
+            { n: 'Wikipedia', u: 'https://www.wikipedia.org', i: 'W' },
+            { n: 'GitHub', u: 'https://www.github.com', i: 'GH' },
+            { n: 'Discord', u: 'https://discord.com/app', i: 'DC' },
+            { n: 'Twitter', u: 'https://x.com', i: 'X' },
+            { n: 'Twitch', u: 'https://www.twitch.tv', i: 'TW' },
         ]);
 
-        // ============ TABS ============
+        // ========== TABS ==========
         function createTab(url) {
-            const id = ++tabCounter;
-            const tab = { id, title: 'New Tab', url: url || '' };
-            tabs.push(tab);
+            const id = ++tabN;
+            const t = { id, title: 'New Tab', url: url || '' };
+            tabs.push(t);
 
-            const frame = document.createElement('iframe');
-            frame.id = 'frame-' + id;
-            frame.className = 'tab-frame';
-            frame.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox';
-            if (url) frame.src = url;
-            document.getElementById('frames-container').appendChild(frame);
+            const f = document.createElement('iframe');
+            f.id = 'f-'+id;
+            f.className = 'frame';
+            f.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox';
+            f.setAttribute('referrerpolicy', 'no-referrer');
+            if (url) { f.src = url; hideHome(); }
+            document.getElementById('frames').appendChild(f);
 
-            frame.addEventListener('load', () => {
-                try { tab.title = frame.contentDocument.title || tab.url || 'New Tab'; } catch(e) { tab.title = tab.url || 'New Tab'; }
+            f.addEventListener('load', () => {
+                try { t.title = f.contentDocument.title || t.url || 'New Tab'; } catch { t.title = t.url || 'New Tab'; }
                 renderTabs();
-                setStatus('Loaded');
+                stInfo('Loaded');
             });
 
             switchTab(id);
@@ -341,257 +416,262 @@
         }
 
         function switchTab(id) {
-            activeTabId = id;
-            document.querySelectorAll('.tab-frame').forEach(f => f.classList.remove('active'));
-            const frame = document.getElementById('frame-' + id);
-            if (frame) frame.classList.add('active');
-            const tab = tabs.find(t => t.id === id);
-            if (tab) document.getElementById('url-input').value = tab.url || '';
+            activeTab = id;
+            document.querySelectorAll('.frame').forEach(f => f.classList.remove('active'));
+            const f = document.getElementById('f-'+id);
+            if (f) f.classList.add('active');
+            const t = tabs.find(t => t.id === id);
+            document.getElementById('url').value = t ? t.url : '';
+            if (t && t.url) hideHome(); else showHome();
             renderTabs();
-            showView('browser');
         }
 
         function closeTab(id, e) {
             if (e) e.stopPropagation();
-            const frame = document.getElementById('frame-' + id);
-            if (frame) frame.remove();
+            const f = document.getElementById('f-'+id);
+            if (f) f.remove();
             tabs = tabs.filter(t => t.id !== id);
-            if (tabs.length === 0) { createTab(); return; }
-            if (activeTabId === id) switchTab(tabs[tabs.length - 1].id);
+            if (!tabs.length) { createTab(); showHome(); return; }
+            if (activeTab === id) switchTab(tabs[tabs.length-1].id);
             renderTabs();
         }
 
         function renderTabs() {
-            const container = document.getElementById('tabs-container');
-            container.innerHTML = '';
-            tabs.forEach(tab => {
-                const el = document.createElement('div');
-                el.className = 'tab' + (tab.id === activeTabId ? ' active' : '');
-                const shortTitle = (tab.title || 'New Tab').substring(0, 20);
-                el.innerHTML = `<span onclick="switchTab(${tab.id})">${shortTitle}</span><span class="tab-close" onclick="closeTab(${tab.id}, event)">&times;</span>`;
-                container.appendChild(el);
+            const ct = document.getElementById('tabs-ct');
+            ct.innerHTML = '';
+            tabs.forEach(t => {
+                const d = document.createElement('div');
+                d.className = 'tab' + (t.id === activeTab ? ' active' : '');
+                const short = (t.title || 'New Tab').substring(0, 22);
+                d.innerHTML = `<span onclick="switchTab(${t.id})">${short}</span><span class="tab-x" onclick="closeTab(${t.id},event)">&times;</span>`;
+                ct.appendChild(d);
             });
         }
 
-        // ============ NAVIGATION ============
-        function navigate() {
-            let input = document.getElementById('url-input').value.trim();
-            if (!input) return;
+        // ========== HOME ==========
+        function showHome() { document.getElementById('home-panel').classList.remove('hidden'); }
+        function hideHome() { document.getElementById('home-panel').classList.add('hidden'); }
 
-            let url;
-            if (input.match(/^https?:\/\//)) {
-                url = input;
-            } else if (input.includes('.') && !input.includes(' ')) {
-                url = 'https://' + input;
-            } else {
-                const engine = document.getElementById('search-engine').value;
-                url = engine + encodeURIComponent(input);
+        function renderHomeShortcuts() {
+            const ct = document.getElementById('home-shortcuts');
+            ct.innerHTML = '';
+            bms.slice(0, 8).forEach(b => {
+                const d = document.createElement('div');
+                d.className = 'home-sc';
+                d.innerHTML = `<div class="home-sc-ico">${b.i || b.n[0]}</div><div class="home-sc-name">${b.n}</div>`;
+                d.onclick = () => openUrl(b.u);
+                ct.appendChild(d);
+            });
+        }
+
+        document.getElementById('home-search').addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                document.getElementById('url').value = e.target.value;
+                go();
+                e.target.value = '';
             }
-
-            const tab = tabs.find(t => t.id === activeTabId);
-            if (tab) { tab.url = url; tab.title = input; }
-            const frame = document.getElementById('frame-' + activeTabId);
-            if (frame) frame.src = url;
-            document.getElementById('url-input').value = url;
-            setStatus('Loading...');
-            showView('browser');
-        }
-
-        function navBack() {
-            const frame = document.getElementById('frame-' + activeTabId);
-            if (frame) { try { frame.contentWindow.history.back(); } catch(e) {} }
-        }
-        function navForward() {
-            const frame = document.getElementById('frame-' + activeTabId);
-            if (frame) { try { frame.contentWindow.history.forward(); } catch(e) {} }
-        }
-        function navReload() {
-            const frame = document.getElementById('frame-' + activeTabId);
-            if (frame) frame.src = frame.src;
-        }
-
-        document.getElementById('url-input').addEventListener('keydown', e => {
-            if (e.key === 'Enter') navigate();
         });
 
-        // ============ VIEWS ============
-        function showView(view) {
-            currentView = view;
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+        // ========== PROXY ==========
+        const APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbxLzhQs0rAMX7Hp3ZuIC-9-Zz2SUstNOXmdOzASL_pMWg5ErGq8CBaQepC_Iw24y6ey/exec';
+        let proxyMode = ld('proxy', 'gscript'); // 'direct', 'gscript'
 
-            if (view !== 'browser') {
-                document.getElementById('panel-' + view).classList.add('active');
+        function proxyUrl(url) {
+            if (proxyMode === 'gscript') return APPS_SCRIPT + '?url=' + encodeURIComponent(url);
+            return url;
+        }
+
+        // ========== NAVIGATION ==========
+        function go() {
+            let input = document.getElementById('url').value.trim();
+            if (!input) return;
+            let url;
+            if (/^https?:\/\//.test(input)) url = input;
+            else if (input.includes('.') && !input.includes(' ')) url = 'https://'+input;
+            else url = document.getElementById('engine').value + encodeURIComponent(input);
+
+            const t = tabs.find(t => t.id === activeTab);
+            if (t) { t.url = url; t.title = input; }
+            const f = document.getElementById('f-'+activeTab);
+            if (f) f.src = proxyUrl(url);
+            document.getElementById('url').value = url;
+            stInfo('Loading...');
+            showView('browser');
+            hideHome();
+        }
+
+        function navBack() { const f=document.getElementById('f-'+activeTab); if(f) try{f.contentWindow.history.back();}catch{} }
+        function navForward() { const f=document.getElementById('f-'+activeTab); if(f) try{f.contentWindow.history.forward();}catch{} }
+        function navReload() { const f=document.getElementById('f-'+activeTab); if(f) f.src=f.src; }
+        function openUrl(u) {
+            document.getElementById('url').value = u;
+            const t = tabs.find(t => t.id === activeTab);
+            if (t) t.url = u;
+            const f = document.getElementById('f-'+activeTab);
+            if (f) f.src = proxyUrl(u);
+            showView('browser');
+            hideHome();
+        }
+
+        document.getElementById('url').addEventListener('keydown', e => { if (e.key==='Enter') go(); });
+
+        // ========== VIEWS ==========
+        function showView(v) {
+            view = v;
+            document.querySelectorAll('.pnl').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sb').forEach(b => b.classList.remove('active'));
+            if (v !== 'browser') {
+                document.getElementById('pnl-'+v).classList.add('active');
+                hideHome();
+            } else {
+                const t = tabs.find(t => t.id === activeTab);
+                if (!t || !t.url) showHome();
             }
-            const btn = document.getElementById('btn-' + view);
+            const btn = document.getElementById('sb-'+v);
             if (btn) btn.classList.add('active');
         }
 
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('expanded');
-        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('expanded'); }
 
-        // ============ BOOKMARKS ============
-        function renderBookmarks() {
-            const grid = document.getElementById('bookmark-grid');
-            grid.innerHTML = '';
-            bookmarks.forEach((bm, i) => {
-                const card = document.createElement('div');
-                card.className = 'bookmark-card';
-                card.innerHTML = `
-                    <span class="bookmark-del" onclick="event.stopPropagation();deleteBookmark(${i})">&times;</span>
-                    <div class="icon">${bm.icon || bm.name[0]}</div>
-                    <div class="name">${bm.name}</div>
-                    <div class="url">${bm.url.replace(/^https?:\/\//, '').substring(0, 30)}</div>
-                `;
-                card.onclick = () => { openUrl(bm.url); };
-                grid.appendChild(card);
+        // ========== BOOKMARKS ==========
+        function renderBMs() {
+            const g = document.getElementById('bm-grid');
+            g.innerHTML = '';
+            bms.forEach((b, i) => {
+                const c = document.createElement('div');
+                c.className = 'bm-card';
+                c.innerHTML = `
+                    <span class="bm-del" onclick="event.stopPropagation();delBM(${i})">&times;</span>
+                    <div class="bm-ico">${b.i || b.n[0]}</div>
+                    <div class="bm-name">${b.n}</div>
+                    <div class="bm-url">${b.u.replace(/^https?:\/\//,'').substring(0,30)}</div>`;
+                c.onclick = () => openUrl(b.u);
+                g.appendChild(c);
             });
         }
 
-        function addBookmark() {
-            const name = document.getElementById('bm-name').value.trim();
-            const url = document.getElementById('bm-url').value.trim();
-            if (!name || !url) return;
-            bookmarks.push({ name, url: url.startsWith('http') ? url : 'https://' + url, icon: name[0].toUpperCase() });
-            saveData('bookmarks', bookmarks);
-            document.getElementById('bm-name').value = '';
-            document.getElementById('bm-url').value = '';
-            renderBookmarks();
+        function addBM() {
+            const n = document.getElementById('bm-n').value.trim();
+            const u = document.getElementById('bm-u').value.trim();
+            if (!n||!u) return;
+            bms.push({ n, u: u.startsWith('http') ? u : 'https://'+u, i: n[0].toUpperCase() });
+            sv('bms', bms);
+            document.getElementById('bm-n').value = '';
+            document.getElementById('bm-u').value = '';
+            renderBMs();
+            renderHomeShortcuts();
         }
 
-        function deleteBookmark(i) {
-            bookmarks.splice(i, 1);
-            saveData('bookmarks', bookmarks);
-            renderBookmarks();
-        }
+        function delBM(i) { bms.splice(i,1); sv('bms',bms); renderBMs(); renderHomeShortcuts(); }
 
-        function openUrl(url) {
-            document.getElementById('url-input').value = url;
-            const tab = tabs.find(t => t.id === activeTabId);
-            if (tab) { tab.url = url; }
-            const frame = document.getElementById('frame-' + activeTabId);
-            if (frame) frame.src = url;
-            showView('browser');
-        }
+        // ========== NOTES ==========
+        const notes = document.getElementById('notes');
+        notes.value = ld('notes', '');
+        notes.addEventListener('input', () => sv('notes', notes.value));
 
-        // ============ NOTES ============
-        const notesArea = document.getElementById('notes-area');
-        notesArea.value = loadData('notes', '');
-        notesArea.addEventListener('input', () => saveData('notes', notesArea.value));
+        // ========== TERMINAL ==========
+        const tout = document.getElementById('term-out');
+        const tin = document.getElementById('term-in');
 
-        // ============ TERMINAL ============
-        const termOutput = document.getElementById('terminal-output');
-        const termInput = document.getElementById('terminal-input');
+        const cmds = {
+            help: () => `Commands:
+  help            Show commands
+  open <url>      Open URL
+  search <q>      Search the web
+  favorites       List favorites
+  clear           Clear output
+  time            Current time
+  ping <url>      Test connectivity
+  encode <text>   Base64 encode
+  decode <text>   Base64 decode
+  ip              Public IP address
+  ua              User agent string
+  history         Tab history
+  panic           Activate panic mode
+  whoami          System info`,
 
-        const commands = {
-            help: () => `Available commands:
-  help          Show this help
-  open <url>    Open URL in browser
-  search <q>    Search the web
-  bookmarks     List bookmarks
-  clear         Clear terminal
-  time          Show current time
-  ping <url>    Test if URL is reachable
-  encode <text> Base64 encode
-  decode <text> Base64 decode
-  ip            Show your public IP
-  ua            Show user agent
-  cookies       Show cookie count
-  history       Show tab history`,
-
-            clear: () => { termOutput.textContent = ''; return ''; },
+            clear: () => { tout.textContent = ''; return ''; },
             time: () => new Date().toLocaleString(),
             ua: () => navigator.userAgent,
-            cookies: () => `Cookies: ${document.cookie ? document.cookie.split(';').length : 0}`,
+            whoami: () => `Platform: ${navigator.platform}\nLanguage: ${navigator.language}\nCores: ${navigator.hardwareConcurrency || 'N/A'}\nOnline: ${navigator.onLine}\nScreen: ${screen.width}x${screen.height}`,
             ip: async () => {
-                try {
-                    const r = await fetch('https://api.ipify.org?format=json');
-                    const d = await r.json();
-                    return 'Public IP: ' + d.ip;
-                } catch { return 'Could not fetch IP'; }
+                try { const r = await fetch('https://api.ipify.org?format=json'); const d = await r.json(); return 'IP: '+d.ip; }
+                catch { return 'Could not resolve'; }
             },
-            encode: (args) => btoa(args.join(' ')),
-            decode: (args) => { try { return atob(args.join(' ')); } catch { return 'Invalid base64'; } },
-            open: (args) => {
-                if (!args.length) return 'Usage: open <url>';
-                let url = args[0];
-                if (!url.startsWith('http')) url = 'https://' + url;
-                openUrl(url);
-                return 'Opening ' + url;
+            encode: (a) => btoa(a.join(' ')),
+            decode: (a) => { try { return atob(a.join(' ')); } catch { return 'Invalid input'; } },
+            open: (a) => { if(!a.length) return 'Usage: open <url>'; let u=a[0]; if(!u.startsWith('http'))u='https://'+u; openUrl(u); return 'Opening '+u; },
+            search: (a) => { if(!a.length) return 'Usage: search <query>'; const u=document.getElementById('engine').value+encodeURIComponent(a.join(' ')); openUrl(u); return 'Searching: '+a.join(' '); },
+            favorites: () => bms.map((b,i) => `  [${i}] ${b.n} - ${b.u}`).join('\n'),
+            ping: async (a) => {
+                if(!a.length) return 'Usage: ping <url>';
+                let u=a[0]; if(!u.startsWith('http'))u='https://'+u;
+                const s=Date.now();
+                try { await fetch(u,{mode:'no-cors'}); return `${u}: ${Date.now()-s}ms`; }
+                catch { return `${u}: unreachable`; }
             },
-            search: (args) => {
-                if (!args.length) return 'Usage: search <query>';
-                const engine = document.getElementById('search-engine').value;
-                const url = engine + encodeURIComponent(args.join(' '));
-                openUrl(url);
-                return 'Searching: ' + args.join(' ');
-            },
-            bookmarks: () => bookmarks.map((b, i) => `  [${i}] ${b.name} - ${b.url}`).join('\n'),
-            ping: async (args) => {
-                if (!args.length) return 'Usage: ping <url>';
-                let url = args[0];
-                if (!url.startsWith('http')) url = 'https://' + url;
-                const start = Date.now();
-                try {
-                    await fetch(url, { mode: 'no-cors' });
-                    return `Ping ${url}: ${Date.now() - start}ms`;
-                } catch { return `Ping ${url}: Failed`; }
-            },
-            history: () => tabs.map(t => `  [${t.id}] ${t.title} - ${t.url}`).join('\n') || '  No tabs',
+            history: () => tabs.map(t => `  [${t.id}] ${t.title} - ${t.url}`).join('\n') || '  Empty',
+            panic: () => { togglePanic(); return 'Panic mode activated. Press Esc or ~ to return.'; },
         };
 
-        termInput.addEventListener('keydown', async (e) => {
+        tin.addEventListener('keydown', async e => {
             if (e.key !== 'Enter') return;
-            const raw = termInput.value.trim();
-            termInput.value = '';
+            const raw = tin.value.trim(); tin.value = '';
             if (!raw) return;
-
-            termOutput.textContent += `$> ${raw}\n`;
-            const parts = raw.split(/\s+/);
-            const cmd = parts[0].toLowerCase();
-            const args = parts.slice(1);
-
-            if (commands[cmd]) {
-                const result = await commands[cmd](args);
-                if (result) termOutput.textContent += result + '\n';
-            } else {
-                termOutput.textContent += `Unknown command: ${cmd}. Type 'help' for commands.\n`;
-            }
-            termOutput.textContent += '\n';
-            termOutput.scrollTop = termOutput.scrollHeight;
+            tout.textContent += `> ${raw}\n`;
+            const [cmd, ...args] = raw.split(/\s+/);
+            const fn = cmds[cmd.toLowerCase()];
+            if (fn) { const r = await fn(args); if (r) tout.textContent += r+'\n'; }
+            else tout.textContent += `Unknown: ${cmd}. Type 'help'.\n`;
+            tout.textContent += '\n';
+            tout.scrollTop = tout.scrollHeight;
         });
 
-        // ============ SETTINGS ============
-        function clearAllData() {
-            if (confirm('Clear all HackPanel data?')) {
-                localStorage.removeItem('hp_bookmarks');
-                localStorage.removeItem('hp_notes');
-                bookmarks = [];
-                notesArea.value = '';
-                renderBookmarks();
+        // ========== PANIC ==========
+        let panicked = false;
+        function togglePanic() {
+            panicked = !panicked;
+            document.getElementById('panic-overlay').classList.toggle('active', panicked);
+            if (panicked) document.title = 'System Settings';
+        }
+
+        // Esc hold or ~ key
+        let escTimer = null;
+        document.addEventListener('keydown', e => {
+            if (e.key === '`' || e.key === '~') { e.preventDefault(); togglePanic(); }
+            if (e.key === 'Escape') {
+                if (panicked) { togglePanic(); return; }
+                escTimer = setTimeout(togglePanic, 500);
+            }
+        });
+        document.addEventListener('keyup', e => { if (e.key === 'Escape' && escTimer) { clearTimeout(escTimer); escTimer = null; } });
+
+        // ========== SETTINGS ==========
+        function clearAll() {
+            if (confirm('Clear all data?')) {
+                localStorage.removeItem('ss_bms');
+                localStorage.removeItem('ss_notes');
+                bms = []; notes.value = ''; renderBMs(); renderHomeShortcuts();
             }
         }
 
-        // Load saved search engine
-        const savedEngine = loadData('search_engine', null);
-        if (savedEngine) document.getElementById('search-engine').value = savedEngine;
-        document.getElementById('search-engine').addEventListener('change', function() {
-            saveData('search_engine', this.value);
-        });
+        const savedEng = ld('engine', null);
+        if (savedEng) document.getElementById('engine').value = savedEng;
+        const savedProxy = ld('proxy', 'direct');
+        proxyMode = savedProxy;
+        document.getElementById('proxy-sel').value = savedProxy;
+        document.getElementById('engine').addEventListener('change', function() { sv('engine', this.value); });
 
-        // ============ STATUS / CLOCK ============
-        function setStatus(msg) { document.getElementById('status-info').textContent = msg; }
-        function updateClock() {
-            document.getElementById('clock').textContent = new Date().toLocaleTimeString();
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
+        // ========== STATUS ==========
+        function stInfo(m) { document.getElementById('st-info').textContent = m; }
+        function tick() { document.getElementById('clock').textContent = new Date().toLocaleTimeString(); }
+        setInterval(tick, 1000); tick();
 
-        // ============ INIT ============
-        renderBookmarks();
+        // ========== INIT ==========
+        renderBMs();
+        renderHomeShortcuts();
         createTab();
-        document.getElementById('url-input').focus();
+        document.getElementById('home-search').focus();
     </script>
 </body>
 </html>
